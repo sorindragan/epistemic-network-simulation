@@ -12,12 +12,13 @@ class ActionA(Action):
         super().__init__()
         self.name = "Action A"
 
-    def do(self, state):
+    def do(self, state) -> int:
         if type(state) != type(State(0)):
             print("The given state was not valid")
         
-        return bernoulli.rvs(p=0.5, size=1)[0]
-
+        rv = bernoulli(p=0.5)
+        return rv.rvs(), rv.pmf(1)
+    
 
 class ActionB(Action):
     def __init__(self, epsilon) -> None:
@@ -30,10 +31,12 @@ class ActionB(Action):
             print("The given state was not valid")
         
         if state.id == 1:
-            return bernoulli.rvs(p=(0.5 + self.epsilon), size=1)[0]
+            rv = bernoulli(p=(0.5 + self.epsilon))
+            return rv.rvs(), rv.pmf(1)
         
         if state.id == 2:
-            return bernoulli.rvs(p=(0.5 - self.epsilon), size=1)[0]
+            rv = bernoulli(p=(0.5 - self.epsilon))
+            return rv.rvs(), rv.pmf(1)
         
         print("It should not reach this point")
-        return 1 if rand.uniform(0, 1) > 0.5 else 0
+        return 1, 0.5 if rand.uniform(0, 1) > 0.5 else 0, 0.5
