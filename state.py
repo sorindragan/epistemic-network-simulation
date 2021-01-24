@@ -4,4 +4,3 @@ class State:
     
     def __repr__(self) -> str:
         return f"State {self.id}"
-

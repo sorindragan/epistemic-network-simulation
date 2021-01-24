@@ -6,9 +6,15 @@ def main():
     s3 = ScientistNode(3)
 
     # Belief stays the same after 25 iterations
-    s1.set_belief(0.49360896462333026)
-    s2.set_belief(0.42888114975493140)
-    s3.set_belief(0.22176380692356368)
+    # s1.set_belief(0.49360896462333026)
+    # s2.set_belief(0.42888114975493140)
+    # s3.set_belief(0.22176380692356368)
+
+    # Belief does not converge in 25 iterations
+    # s1.set_belief(0.001)
+    # s2.set_belief(0.0002)
+    # s3.set_belief(0.5)
+
     
     s1.define_neighbours([s2, s3])
     s2.define_neighbours([s1, s3])

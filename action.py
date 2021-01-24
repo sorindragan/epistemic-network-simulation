@@ -12,6 +12,7 @@ class ActionA(Action):
         super().__init__()
         self.name = "Action A"
 
+    # bernoulli distributed payoff with p = 1/2 for both states
     def do(self, state) -> int:
         if type(state) != type(State(0)):
             print("The given state was not valid")
@@ -26,6 +27,7 @@ class ActionB(Action):
         self.name = "Action B"
         self.epsilon = epsilon
 
+    # bernoulli distributed payoff with p = 1/2 +- epsilon depending on the state
     def do(self, state) -> int:
         if type(state) != type(State(0)):
             print("The given state was not valid")

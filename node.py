@@ -4,6 +4,7 @@ import numpy.random as rand
 
 from action import ActionA, ActionB
 
+VERBOSE = False
 
 class AgentNode:
     def __init__(self, id):
@@ -46,7 +47,7 @@ class ScientistNode(AgentNode):
         if self.belief < 0.5:
             payoff, p = self.action_a.do(State(1))
         
-        if self.belief > 0.5:
+        if self.belief >= 0.5:
             payoff, p = self.action_b.do(State(1))
         
         if payoff is None:
@@ -61,6 +62,8 @@ class ScientistNode(AgentNode):
                                     for n in self.neighbours]) * (prior if state.id == 1 else (1 - prior))
                             for state in [State(1), State(2)]])
         self.belief = nomerator / denominator
-        print(self.belief)
+        
+        if VERBOSE:
+            print(f"{self.id} : {self.belief}")
         
     
