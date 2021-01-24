@@ -1,6 +1,6 @@
 from node import ScientistNode
 
-def main():
+def sanity_check():
     s1 = ScientistNode(1)
     s2 = ScientistNode(2)
     s3 = ScientistNode(3)
@@ -15,7 +15,6 @@ def main():
     # s2.set_belief(0.0002)
     # s3.set_belief(0.5)
 
-    
     s1.define_neighbours([s2, s3])
     s2.define_neighbours([s1, s3])
     s3.define_neighbours([s1, s2])
@@ -27,16 +26,19 @@ def main():
     for _ in range(25):
         for s in [s1, s2, s3]:
             s.act()
-        
+
         for s in [s1, s2, s3]:
             s.update_belief()
-        
+
         # s1.update_belief()
-    
+
     print(s1)
     print(s2)
     print(s3)
-        
+
+def main():
+    sanity_check()
+    
 
 if __name__ == '__main__':
     main()
