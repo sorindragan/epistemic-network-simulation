@@ -27,7 +27,12 @@ class ScientistNode(AgentNode):
         self.belief = belief
 
     def add_neighbour(self, neigbour) -> None:
-        self.neighbours.append(neigbour)
+        if neigbour not in self.neighbours:
+            self.neighbours.append(neigbour)
+    
+    def remove_neighbour(self, neighbour) -> None:
+        if neighbour in self.neighbours:
+            self.neighbours.remove(neighbour)
     
     def define_neighbours(self, neighbours_list) -> None:
         self.neighbours = neighbours_list
