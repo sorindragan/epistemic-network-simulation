@@ -21,7 +21,7 @@ class ScientistNode(AgentNode):
         self.neighbours = []
     
     def __repr__(self) -> str:
-        return f"<ID: {self.id} \nBelief: {self.belief} \nNeighbours: {[n.id for n in self.neighbours]}>"
+        return f"<ID: {self.id} \nBelief: {self.belief} \nNeighbours: {[n.id for n in self.neighbours]}>\n"
     
     def set_belief(self, belief):
         self.belief = belief

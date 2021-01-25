@@ -1,4 +1,7 @@
 from node import ScientistNode
+from network import generate_ring_lattice, generate_random_network, generate_watts_strogatz_network, generate_barabasi_albert_network
+
+STEPS = 25
 
 def sanity_check():
     s1 = ScientistNode(1)
@@ -30,14 +33,28 @@ def sanity_check():
         for s in [s1, s2, s3]:
             s.update_belief()
 
-        # s1.update_belief()
 
     print(s1)
     print(s2)
     print(s3)
 
+def run_simulation(nodes):
+    print(nodes)
+    for _ in range(STEPS):
+        for n in nodes:
+            n.act()
+
+        for n in nodes:
+            n.update_belief()
+    print(nodes)
+    
+
 def main():
-    sanity_check()
+    # sanity_check()
+    nodes = generate_ring_lattice(N=20)
+    run_simulation(nodes)
+
+
     
 
 if __name__ == '__main__':
