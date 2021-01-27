@@ -7,6 +7,7 @@ from netwulf import visualize
 from node import ScientistNode
 
 def generate_ring_lattice(N=10, ret=False):
+    config = None
     G = nx.Graph()
     node_list = [ScientistNode(i) for i in range(1, N+1)]
     node_ids = [node.id for node in node_list]
@@ -20,7 +21,7 @@ def generate_ring_lattice(N=10, ret=False):
     if ret:
         return G, node_list, node_ids
     
-    styled_network, config = visualize_network(G=G)
+    # styled_network, config = visualize_network(G=G)
     return node_list, G, config
 
 
@@ -31,6 +32,7 @@ def generate_random_network(N=10, p=0.11):
 
         For p > 1/N, the network is in the supercritical regime
     """
+    config = None
     G = nx.Graph()
     node_list = [ScientistNode(i) for i in range(1, N+1)]
     node_ids = [node.id for node in node_list]
@@ -46,7 +48,7 @@ def generate_random_network(N=10, p=0.11):
             node_list[i-1].add_neighbour(node_list[j-1])
             node_list[j-1].add_neighbour(node_list[i-1])
     
-    styled_network, config = visualize_network(G=G)
+    # styled_network, config = visualize_network(G=G)
     return node_list, G, config
 
 
@@ -57,6 +59,7 @@ def generate_watts_strogatz_network(N=10, p=0.11):
         p = probability of a link between 2 nodes to be rewired
 
     """
+    config = None
     G, node_list, node_ids = generate_ring_lattice(N=N, ret=True)
     # I could probably do this faster...
     for node in node_list:
@@ -78,7 +81,7 @@ def generate_watts_strogatz_network(N=10, p=0.11):
                 node.add_neighbour(node_list[end_id])
                 node_list[end_id].add_neighbour(node)
                 
-    styled_network, config = visualize_network(G=G)
+    # styled_network, config = visualize_network(G=G)
     return node_list, G, config
 
 
@@ -91,6 +94,7 @@ def generate_barabasi_albert_network(N=10, m0=2, m=2):
         
         Restriction: m <= m0
     """
+    config = None
     G = nx.Graph()
     node_list = [ScientistNode(i) for i in range(1, N+1)]
     node_ids = [node.id for node in node_list]
@@ -110,6 +114,8 @@ def generate_barabasi_albert_network(N=10, m0=2, m=2):
     for node in node_list[m0:]:
         idx = node_list.index(node)
         node_degrees = [len(n.neighbours) for n in node_list if n != node]
+        if sum(node_degrees) == 0:
+            node_degrees = np.array(node_degrees) + 1
         probs = np.array(node_degrees) / sum(node_degrees)
         end_nodes = rand.choice([n for n in node_list if n != node], m, replace=False, p=probs)
         
@@ -117,9 +123,9 @@ def generate_barabasi_albert_network(N=10, m0=2, m=2):
             node.add_neighbour(end)
             end.add_neighbour(node)
             end_idx = node_list.index(end)
-            G.add_edge(idx, end_idx)
+            G.add_edge(idx+1, end_idx+1)
 
-    styled_network, config = visualize_network(G=G)
+    # styled_network, config = visualize_network(G=G)
     return node_list, G, config
 
 

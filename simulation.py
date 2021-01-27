@@ -1,12 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from optparse import OptionParser
-from netwulf import visualize
+from netwulf import visualize, draw_netwulf
 
 from node import JournalistNode, PolicymakerNode, ScientistNode
 from network import generate_ring_lattice, generate_random_network, generate_watts_strogatz_network, generate_barabasi_albert_network
 
-STEPS = 25
+MAX_STEPS = 25
+EXPERIMENT = "scientists"
 
 def sanity_check():
     s1 = ScientistNode(1)
@@ -84,7 +85,8 @@ def sanity_check():
     
     generate_belief_graph('Convergence of average belief', timesteps, *average_beliefs)
 
-def generate_belief_graph(title,
+def generate_belief_graph(filename,
+                          title,
                           timesteps,
                           *args
                           ):
@@ -102,9 +104,11 @@ def generate_belief_graph(title,
         ax.plot(timesteps, avg_belief["values"], color=colors[idx], label=avg_belief["label"])
 
     plt.legend(loc="upper left", title="Lines Legend", frameon=False)
-    plt.show()
+    # plt.show()
+    plt.savefig(f"results/{filename}.png")
 
-def run_simulation(nodes):
+
+def run_simulation(filename, nodes):
     timesteps = [0]
     average_beliefs = []
     average_beliefs.append({
@@ -112,7 +116,7 @@ def run_simulation(nodes):
         "values": [np.mean([s.belief for s in nodes])]
     })
 
-    for t_ in range(STEPS):
+    for t_ in range(MAX_STEPS):
         for n in nodes:
             n.act()
 
@@ -123,35 +127,104 @@ def run_simulation(nodes):
             np.mean([s.belief for s in nodes]))
         timesteps.append(t_+1)
 
-    generate_belief_graph('Convergence of average belief',
+    generate_belief_graph(filename, 'Convergence of average belief',
                           timesteps, *average_beliefs)
 
 
 def main():
+    parser = OptionParser()
 
-    # parser = OptionParser()
+    parser.add_option("-m", "--model", type="string", dest="ntype",
+                    help="Possible network types: 'ring', 'random', 'ws', 'ba'.")
+    parser.add_option("-n", "--nodes", type="int", dest="N",
+                    help="Number of nodes in the network.")
+    parser.add_option("-p", "--prob", type="float", dest="p",
+                    help="Probability used in generating models.")
+    parser.add_option("--m0", type="int", dest="m0",
+                      help="Starting connected nodes for BA model.")
 
-    # parser.add_option("-f", "--file", dest="filename",
-    #                 help="write report to FILE", metavar="FILE")
-    # parser.add_option("-q", "--quiet",
-    #                 action="store_false", dest="verbose", default=True,
-    #                 help="don't print status messages to stdout")
+    (options, args) = parser.parse_args()
 
-    # (options, args) = parser.parse_args()
-
-
+    default_config = {
+        # Input/output
+        'zoom': 2,
+        # Physics
+        'node_charge': -45,
+        'node_gravity': 0.1,
+        'link_distance': 15,
+        'link_distance_variation': 0,
+        'node_collision': True,
+        'wiggle_nodes': True,
+        'freeze_nodes': False,
+        # Nodes
+        'node_fill_color': '#4e4fd4',
+        'node_stroke_color': '#555555',
+        'node_label_color': '#000000',
+        'display_node_labels': True,
+        'scale_node_size_by_strength': True,
+        'node_size': 8,
+        'node_stroke_width': 1.5,
+        'node_size_variation': 0.8,
+        # Links
+        'link_color': '#7c7c7c',
+        'link_width': 2,
+        'link_alpha': 0.5,
+        'link_width_variation': 0.5,
+        # Thresholding
+        'display_singleton_nodes': True,
+        'min_link_weight_percentile': 0,
+        'max_link_weight_percentile': 1
+    }
+    
+    # print(options)
+    # print(args)
     # sanity_check()
 
-    # Ring Lattice
-    # nodes, G, config = generate_ring_lattice(N=20)
-    # visualize(G, config=config)
-    # run_simulation(nodes)
+    # Default values
+    p = 0.11
+    N = 20
+    m0 = 2
 
-    # Random Network
-    nodes, G, config = generate_random_network(N=50)
-    visualize(G, config=config)
-    run_simulation(nodes)
+    if options.p:
+        p = options.p
     
+    if options.N:
+        N = options.N
+    
+    if options.m0:
+        m0 = options.m0
+
+    if options.ntype:
+        if options.ntype == 'ring':
+            # Ring Lattice
+            nodes, G, config = generate_ring_lattice(N=N)
+            visualize(G, config=default_config)
+            run_simulation(nodes)
+
+        if options.ntype == 'random':
+            # Random Network
+            nodes, G, config = generate_random_network(N=N, p=p)
+            visualize(G, config=default_config)
+            run_simulation(nodes)
+
+        if options.ntype == 'ws':
+            # Watts-Strogatz Network
+            nodes, G, config = generate_watts_strogatz_network(N=N, p=p)
+            visualize(G, config=default_config)
+            run_simulation(nodes)
+
+        if options.ntype == 'ba':
+            # Barabasi_alber Network
+            nodes, G, config = generate_barabasi_albert_network(N=N, m0=m0, m=m0)
+            # visualize(G, config=default_config)
+            _network, _ = visualize(G, config=default_config, plot_in_cell_below=False)
+            # fig, ax = draw_netwulf(_network, figsize=(10, 10))
+            fig, ax = draw_netwulf(_network)
+            # plt.show()
+
+            plt.savefig(f"results/{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}.png")
+            filename = f"{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}_graph"
+            run_simulation(filename, nodes)  
 
 if __name__ == '__main__':
     main()
