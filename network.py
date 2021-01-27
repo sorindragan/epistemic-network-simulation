@@ -20,8 +20,8 @@ def generate_ring_lattice(N=10, ret=False):
     if ret:
         return G, node_list, node_ids
     
-    visualize_network(G=G)
-    return node_list
+    styled_network, config = visualize_network(G=G)
+    return node_list, G, config
 
 
 def generate_random_network(N=10, p=0.11):
@@ -46,8 +46,9 @@ def generate_random_network(N=10, p=0.11):
             node_list[i-1].add_neighbour(node_list[j-1])
             node_list[j-1].add_neighbour(node_list[i-1])
     
-    visualize_network(G=G)
-    return node_list
+    styled_network, config = visualize_network(G=G)
+    return node_list, G, config
+
 
 
 def generate_watts_strogatz_network(N=10, p=0.11):
@@ -77,8 +78,9 @@ def generate_watts_strogatz_network(N=10, p=0.11):
                 node.add_neighbour(node_list[end_id])
                 node_list[end_id].add_neighbour(node)
                 
-    visualize_network(G)
-    return node_list
+    styled_network, config = visualize_network(G=G)
+    return node_list, G, config
+
 
 # also called scale-free model
 def generate_barabasi_albert_network(N=10, m0=2, m=2):
@@ -117,9 +119,8 @@ def generate_barabasi_albert_network(N=10, m0=2, m=2):
             end_idx = node_list.index(end)
             G.add_edge(idx, end_idx)
 
-    visualize_network(G=G)
-    return node_list
-    
+    styled_network, config = visualize_network(G=G)
+    return node_list, G, config
 
 
 def visualize_network(G=None):
@@ -133,5 +134,5 @@ def visualize_network(G=None):
         G.remove_edge(1, 3)
         print(list(G.nodes))
         print(list(G.edges))
-    visualize(G)
+    return visualize(G)
 
