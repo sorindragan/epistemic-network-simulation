@@ -1,4 +1,5 @@
 import numpy as np
+import networkx as nx
 import matplotlib.pyplot as plt
 from optparse import OptionParser
 from netwulf import visualize, draw_netwulf
@@ -10,6 +11,7 @@ MAX_STEPS = 25
 EXPERIMENT = "scientists"
 
 def sanity_check():
+    G = nx.Graph()
     s1 = ScientistNode(1)
     s2 = ScientistNode(2)
     s3 = ScientistNode(3)
@@ -38,8 +40,25 @@ def sanity_check():
     s2.define_neighbours([s1, s3])
     s3.define_neighbours([s2, s4])
     s4.define_neighbours([s3, s1])
+    G.add_edge(1, 2)
+    G.add_edge(1, 4)
+    G.add_edge(2, 3)
+    G.add_edge(3, 4)
+
     p1.define_neighbours([s3, j1])
     j1.define_neighbours([s3, s4])
+    G.add_edge(5, 3)
+    G.add_edge(5, 1)
+    G.add_edge(6, 3)
+    G.add_edge(6, 4)
+    
+    # group colors
+    for k, v in list(G.nodes(data=True))[:-2]:
+        v['group'] = "blue"
+    
+    list(G.nodes(data=True))[-2][1]['group'] = "green"
+    list(G.nodes(data=True))[-1][1]['group'] = "red"
+    visualize(G)
 
     for n_ in [s1, s2, s3, s4, p1, j1]: 
         print(n_)
@@ -178,6 +197,7 @@ def main():
     
     # print(options)
     # print(args)
+    # Sanity check working fine
     # sanity_check()
 
     # Default values
@@ -198,20 +218,34 @@ def main():
         if options.ntype == 'ring':
             # Ring Lattice
             nodes, G, config = generate_ring_lattice(N=N)
-            visualize(G, config=default_config)
-            run_simulation(nodes)
+            _network, _ = visualize(
+                G, config=default_config, plot_in_cell_below=False)
+            fig, ax = draw_netwulf(_network)
+            plt.savefig(
+                f"results/{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}.png")
+            filename = f"{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}_graph"
+            run_simulation(filename, nodes)
 
         if options.ntype == 'random':
             # Random Network
             nodes, G, config = generate_random_network(N=N, p=p)
-            visualize(G, config=default_config)
-            run_simulation(nodes)
+            _network, _ = visualize(
+                G, config=default_config, plot_in_cell_below=False)
+            fig, ax = draw_netwulf(_network)
+            plt.savefig(
+                f"results/{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}.png")
+            filename = f"{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}_graph"
+            run_simulation(filename, nodes)
 
         if options.ntype == 'ws':
             # Watts-Strogatz Network
             nodes, G, config = generate_watts_strogatz_network(N=N, p=p)
-            visualize(G, config=default_config)
-            run_simulation(nodes)
+            _network, _ = visualize(G, config=default_config, plot_in_cell_below=False)
+            fig, ax = draw_netwulf(_network)
+            plt.savefig(
+                f"results/{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}.png")
+            filename = f"{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}_graph"
+            run_simulation(filename, nodes)
 
         if options.ntype == 'ba':
             # Barabasi_alber Network

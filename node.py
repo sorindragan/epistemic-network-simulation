@@ -5,6 +5,7 @@ import numpy.random as rand
 from action import ActionA, ActionB
 
 VERBOSE = False
+EPSILON = 0.05
 
 
 class AgentNode:
@@ -18,7 +19,7 @@ class ScientistNode(AgentNode):
         self.type = "Scientist"
         self.belief = rand.uniform(0, 1)
         self.action_a = ActionA()
-        self.action_b = ActionB(0.05)
+        self.action_b = ActionB(EPSILON)
         self.outcome = None
         self.pmf = None
         self.neighbours = []
@@ -81,7 +82,7 @@ class PolicymakerNode(AgentNode):
         self.type = "Policymaker"
         self.belief = rand.uniform(0, 0.5)
         self.action_a = ActionA()
-        self.action_b = ActionB(0.05)
+        self.action_b = ActionB(EPSILON)
         self.neighbours = []
 
     def __repr__(self) -> str:
@@ -120,7 +121,7 @@ class JournalistNode(AgentNode):
         self.type = "Journalist"
         self.belief = rand.uniform(0, 1)
         self.action_a = ActionA()
-        self.action_b = ActionB(0.05)
+        self.action_b = ActionB(EPSILON)
         self.outcome = None
         self.pmf = None
         self.neighbours = []
