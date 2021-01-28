@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.random as rand
 import networkx as nx
 import matplotlib.pyplot as plt
 from optparse import OptionParser
@@ -8,7 +9,7 @@ from node import JournalistNode, PolicymakerNode, ScientistNode
 from network import generate_ring_lattice, generate_random_network, generate_watts_strogatz_network, generate_barabasi_albert_network
 
 MAX_STEPS = 25
-EXPERIMENT = "policymakers"
+EXPERIMENT = "policymakers_journalists"
 
 def sanity_check():
     G = nx.Graph()
@@ -122,7 +123,7 @@ def generate_belief_graph(filename,
     for idx, avg_belief in enumerate(args):
         ax.plot(timesteps, avg_belief["values"], color=colors[idx], label=avg_belief["label"])
 
-    plt.legend(loc="upper left", title="Lines Legend", frameon=False)
+    plt.legend(loc="lower right", title="Lines Legend", frameon=False)
     plt.xlabel('Timesteps')
     plt.ylabel('Average Belief')    
 
@@ -130,28 +131,100 @@ def generate_belief_graph(filename,
     plt.savefig(f"results/{filename}.png")
 
 
-def run_simulation(filename, nodes):
+def run_simulation(filename, nodes, advanced=False):
     timesteps = [0]
     average_beliefs = []
-    average_beliefs.append({
-        "label": "Scientists Average Belief",
-        "values": [np.mean([s.belief for s in nodes])]
-    })
+    if not advanced:
+        average_beliefs.append({
+            "label": "Scientists Average Belief",
+            "values": [np.mean([s.belief for s in nodes])]
+        })
+    if advanced:
+        average_beliefs.append({
+            "label": "Aggregated Average Belief",
+            "values": [np.mean([s.belief for s in nodes])]
+        })
+        average_beliefs.append({
+             "label": "Scientists Average Belief",
+             "values": [np.mean([s.belief for s in nodes[:-2]])]
+         })
+        average_beliefs.append({
+            "label": "Policymaker Average Belief",
+            "values": [nodes[-2].belief]
+        })
+        average_beliefs.append({
+            "label": "Journalist Average Belief",
+            "values": [nodes[-1].belief]
+        })
 
     for t_ in range(MAX_STEPS):
         for n in nodes:
+            if advanced and n == nodes[-2]:
+                continue
             n.act()
 
         for n in nodes:
             n.update_belief()
         
-        average_beliefs[0]["values"].append(
-            np.mean([s.belief for s in nodes]))
+        if not advanced:
+            average_beliefs[0]["values"].append(
+                np.mean([s.belief for s in nodes]))
+        if advanced:
+            average_beliefs[0]["values"].append(
+                np.mean([s.belief for s in nodes]))
+            average_beliefs[1]["values"].append(
+                np.mean([s.belief for s in nodes[:-2]]))
+            average_beliefs[2]["values"].append(nodes[-2].belief)
+            average_beliefs[3]["values"].append(nodes[-1].belief)
+
         timesteps.append(t_+1)
 
     generate_belief_graph(filename, 'Convergence of average belief',
                           timesteps, *average_beliefs)
 
+
+def add_policymaker_journalist(nodes, G, s):
+    if s > 0.5:
+        s = 0.5
+    nodes_no = len(nodes)
+    pmaker_neighbours_no = int(nodes_no * s) - 1
+    journalist_neighbours_no = int(nodes_no * 2 * s) - 1
+
+    if pmaker_neighbours_no == 0:
+        pmaker_neighbours_no = 1
+        journalist_neighbours_no = 2
+
+    policymaker = PolicymakerNode(nodes_no + 1)
+    journalist = JournalistNode(nodes_no + 2)
+   
+    # get the most connected percentage of scientists
+    sorted_nodes = sorted(nodes, key=lambda n: len(n.neighbours), reverse=True)
+    policymaker.define_neighbours(sorted_nodes[:pmaker_neighbours_no] + [journalist])
+    for node in sorted_nodes[:pmaker_neighbours_no]:
+        G.add_edge(nodes_no + 1, node.id)
+    
+    probs = [i for i in range(len(sorted_nodes))]
+    journalist_neighbours = rand.choice(sorted_nodes, journalist_neighbours_no, 
+                                        replace=False,
+                                        p=np.array(probs)/sum(probs)
+                                        )
+    journalist.define_neighbours(journalist_neighbours)
+    
+    for node in journalist_neighbours:
+        G.add_edge(nodes_no + 2, node.id)
+     
+    G.add_edge(nodes_no + 1, nodes_no + 2)
+    nodes.append(policymaker)
+    nodes.append(journalist)
+
+    # add colors
+    for k, v in list(G.nodes(data=True))[:-2]:
+        v['group'] = "blue"
+
+    list(G.nodes(data=True))[-2][1]['group'] = "green"
+    list(G.nodes(data=True))[-1][1]['group'] = "red"
+
+    return nodes, G
 
 def main():
     parser = OptionParser()
@@ -164,6 +237,10 @@ def main():
                     help="Probability used in generating models.")
     parser.add_option("--m0", type="int", dest="m0",
                       help="Starting connected nodes for BA model.")
+    parser.add_option("-a", "--advanced", action="store_true", dest="a", default=False,
+                      help="Add policymakers and journalists to the model.")
+    parser.add_option("-s", "--scilinks", type="float", dest="s",
+                      help="Percentage of the scientists connected with the other nodes.")
 
     (options, args) = parser.parse_args()
 
@@ -198,15 +275,16 @@ def main():
         'max_link_weight_percentile': 1
     }
     
-    # print(options)
+    print(options)
     # print(args)
     # Sanity check working fine
     # sanity_check()
 
     # Default values
-    p = 0.11
-    N = 20
-    m0 = 2
+    p   = 0.11
+    N   = 20
+    m0  = 2
+    s   = 0.25
 
     if options.p:
         p = options.p
@@ -216,8 +294,11 @@ def main():
     
     if options.m0:
         m0 = options.m0
+    
+    if options.s:
+        s = options.s
 
-    if options.ntype:
+    if options.ntype and not options.a:
         if options.ntype == 'ring':
             # Ring Lattice
             nodes, G, config = generate_ring_lattice(N=N)
@@ -251,7 +332,7 @@ def main():
             run_simulation(filename, nodes)
 
         if options.ntype == 'ba':
-            # Barabasi_alber Network
+            # Barabasi-Albert Network
             nodes, G, config = generate_barabasi_albert_network(N=N, m0=m0, m=m0)
             # visualize(G, config=default_config)
             _network, _ = visualize(G, config=default_config, plot_in_cell_below=False)
@@ -262,6 +343,64 @@ def main():
             plt.savefig(f"results/{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}.png")
             filename = f"{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}_graph"
             run_simulation(filename, nodes)  
+
+    ###################################################
+
+    # Advanced simulation: Policymakers and Journalists
+    if options.ntype and options.a:
+        if options.ntype == 'ring':
+            # Ring Lattice
+            nodes, G, config = generate_ring_lattice(N=N)
+            nodes, G = add_policymaker_journalist(nodes, G, s)
+
+            _network, _ = visualize(
+                G, config=default_config, plot_in_cell_below=False)
+            fig, ax = draw_netwulf(_network)
+            plt.savefig(
+                f"results/{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}_{s}.png")
+            filename = f"{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}_{s}_graph"
+            run_simulation(filename, nodes, advanced=True)
+
+        if options.ntype == 'random':
+            # Random Network
+            nodes, G, config = generate_random_network(N=N, p=p)
+            nodes, G = add_policymaker_journalist(nodes, G, s)
+
+            _network, _ = visualize(
+                G, config=default_config, plot_in_cell_below=False)
+            fig, ax = draw_netwulf(_network)
+            plt.savefig(
+                f"results/{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}_{s}.png")
+            filename = f"{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}_{s}_graph"
+            run_simulation(filename, nodes, advanced=True)
+
+        if options.ntype == 'ws':
+            # Watts-Strogatz Network
+            nodes, G, config = generate_watts_strogatz_network(N=N, p=p)
+            nodes, G = add_policymaker_journalist(nodes, G, s)
+
+            _network, _ = visualize(
+                G, config=default_config, plot_in_cell_below=False)
+            fig, ax = draw_netwulf(_network)
+            plt.savefig(
+                f"results/{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}_{s}.png")
+            filename = f"{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}_{s}_graph"
+            run_simulation(filename, nodes, advanced=True)
+
+        if options.ntype == 'ba':
+            # Barabasi-Albert Network
+            nodes, G, config = generate_barabasi_albert_network(
+                N=N, m0=m0, m=m0)
+            nodes, G = add_policymaker_journalist(nodes, G, s)
+
+            _network, _ = visualize(
+                G, config=default_config, plot_in_cell_below=False)
+            fig, ax = draw_netwulf(_network)
+            
+            plt.savefig(
+                f"results/{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}_{s}.png")
+            filename = f"{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}_{s}_graph"
+            run_simulation(filename, nodes, advanced=True)
 
 if __name__ == '__main__':
     main()
