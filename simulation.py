@@ -8,7 +8,7 @@ from node import JournalistNode, PolicymakerNode, ScientistNode
 from network import generate_ring_lattice, generate_random_network, generate_watts_strogatz_network, generate_barabasi_albert_network
 
 MAX_STEPS = 25
-EXPERIMENT = "scientists"
+EXPERIMENT = "policymakers"
 
 def sanity_check():
     G = nx.Graph()
@@ -123,6 +123,9 @@ def generate_belief_graph(filename,
         ax.plot(timesteps, avg_belief["values"], color=colors[idx], label=avg_belief["label"])
 
     plt.legend(loc="upper left", title="Lines Legend", frameon=False)
+    plt.xlabel('Timesteps')
+    plt.ylabel('Average Belief')    
+
     # plt.show()
     plt.savefig(f"results/{filename}.png")
 

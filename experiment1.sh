@@ -5,6 +5,6 @@ do
 echo "$n nodes"
 r=$(python -c "print(1/$n)")
 p=`echo $r + $e | bc`
-python simulation.py --model random -n $n -p $p
+python simulation.py --model ba -n $n -p $p
 done
 exit 0
