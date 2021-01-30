@@ -8,6 +8,7 @@ from netwulf import visualize, draw_netwulf
 from node import JournalistNode, PolicymakerNode, ScientistNode
 from network import generate_ring_lattice, generate_random_network, generate_watts_strogatz_network, generate_barabasi_albert_network
 
+VERBOSE = True
 MAX_STEPS = 25
 EXPERIMENT = "policymakers_journalists"
 
@@ -275,8 +276,8 @@ def main():
         'max_link_weight_percentile': 1
     }
     
-    print(options)
-    # print(args)
+    if VERBOSE: print(options)
+
     # Sanity check working fine
     # sanity_check()
 
@@ -297,7 +298,8 @@ def main():
     
     if options.s:
         s = options.s
-
+    
+    # Scientists only simulation 
     if options.ntype and not options.a:
         if options.ntype == 'ring':
             # Ring Lattice
@@ -401,6 +403,7 @@ def main():
                 f"results/{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}_{s}.png")
             filename = f"{EXPERIMENT}_{options.ntype}_{N}_{p}_{m0}_{s}_graph"
             run_simulation(filename, nodes, advanced=True)
+
 
 if __name__ == '__main__':
     main()

@@ -1,4 +1,5 @@
 #!/bin/bash
+cd ..
 e=0.01
 n=100
 for links in 1 2 5 10
